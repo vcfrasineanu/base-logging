@@ -30,6 +30,6 @@
  *
  */
 
-#include <base/logging/logging_printf_style.h>
-#include <base/logging/logging_iostream_style.h>
+#include <base-logging/logging/logging_printf_style.h>
+#include <base-logging/logging/logging_iostream_style.h>
 #endif // _BASE_LOGGING_H_

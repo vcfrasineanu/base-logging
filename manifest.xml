@@ -1,5 +1,5 @@
 <package>
-  <description brief="Rock base library containing common utilities">
+  <description brief="Rock base library containing logging utilities">
   
   </description>
   <author>Steffen Planthaber/Steffen.Planthaber@dfki.de</author>
@@ -14,8 +14,5 @@
   <depend package="dummy-dependency-n-1" />
   <depend package="dummy-dependency-n" />
   -->
-  <depend package="eigen3" />
-  <depend package="boost" />
-  <depend package="external/sisl" optional="1" />
 
 </package>
