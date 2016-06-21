@@ -18,7 +18,7 @@
 #ifndef _BASE_LOGGING_IOSTREAM_STYLE_H_
 #define _BASE_LOGGING_IOSTREAM_STYLE_H_
 
-#include <base/logging/logging_printf_style.h>
+#include <base-logging/logging/logging_printf_style.h>
 #include <sstream>
 
 // To allow for the streaming syntax, relying on 'dead code elimination'

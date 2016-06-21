@@ -4,7 +4,8 @@
  *
  */
 
-#include "../../../logging/src/logging/logging_printf_style.h"
+#include <base-logging/logging/logging_printf_style.h>
+#include <base-logging/logging/terminal_colors.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,8 +13,6 @@
 #include <sys/time.h>
 #include <time.h>
 #include <vector>
-
-#include "../../../logging/src/logging/terminal_colors.h"
 
 namespace base {
 namespace logging { 
