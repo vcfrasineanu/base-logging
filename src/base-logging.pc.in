@@ -6,7 +6,7 @@ includedir=${prefix}/include
 Name: @TARGET_NAME@
 Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
-Requires: @PKGCONFIG_REQUIRES@ osgVizGraphics
+Requires: @PKGCONFIG_REQUIRES@
 Libs: -L${libdir} -l@TARGET_NAME@ @PKGCONFIG_LIBS@ @Boost_SYSTEM_LIBRARY@ @LIBS@
 Cflags: -I${includedir} @INCLUDEDIRS@ @PKGCONFIG_CFLAGS@
 
