@@ -174,7 +174,9 @@ enum Priority	{ UNKNOWN = 0, UNKNOWN_P = 0, FATAL = 1, FATAL_P =1, ERROR = 2, ER
 #endif
  
 
-enum LogFormat	{ DEFAULT = 0, MULTILINE, SHORT, ENDLOGFORMATS};
+enum LogFormat	{ DEFAULT = 0, MULTILINE, SHORT, ENDLOGFORMATS };
+
+enum LogOutput  { DEFAULT_OUTPUT = 0, SYSLOG };
 
 /**
  * @class Logger
@@ -258,9 +260,19 @@ private:
         */
         LogFormat getLogFormatFromEnv() const;
 
+        /** 
+        * Retrieve log output from the environment variable BASE_LOG_OUTPUT.
+        * If the variable is set to SYSLOG, then the logs will be redirected to syslog.
+        * Otherwise, the default output will be used.
+        */
+        LogOutput getLogOutputFromEnv() const;
+
         FILE* mStream;
         std::vector<std::string> mPriorityNames;
+        std::vector<int> mPriorityToSyslogPriority;
         Priority mPriority;
+
+        LogOutput mLogOutput;
 
         const char* mpLogColor[ENDPRIORITIES];
         const char* mpColorEnd;

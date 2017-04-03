@@ -14,10 +14,12 @@
 #include <time.h>
 #include <vector>
 
+#include <syslog.h>
+
 namespace base {
 namespace logging { 
 
-Logger::Logger() : mStream(stderr), mPriorityNames(ENDPRIORITIES), mLogFormatNames(ENDLOGFORMATS)
+Logger::Logger() : mStream(stderr), mPriorityNames(ENDPRIORITIES), mPriorityToSyslogPriority(ENDPRIORITIES), mLogFormatNames(ENDLOGFORMATS)
 {
     mPriorityNames[INFO_P] = "INFO";
     mPriorityNames[DEBUG_P] = "DEBUG";
@@ -26,12 +28,20 @@ Logger::Logger() : mStream(stderr), mPriorityNames(ENDPRIORITIES), mLogFormatNam
     mPriorityNames[FATAL_P] = "FATAL";
     mPriorityNames[UNKNOWN_P] = "UNKNOWN";
 
+    mPriorityToSyslogPriority[INFO_P] = LOG_INFO;
+    mPriorityToSyslogPriority[DEBUG_P] = LOG_DEBUG;
+    mPriorityToSyslogPriority[WARN_P] = LOG_WARNING;
+    mPriorityToSyslogPriority[ERROR_P] = LOG_ERR;
+    mPriorityToSyslogPriority[FATAL_P] = LOG_CRIT;
+    mPriorityToSyslogPriority[UNKNOWN_P] = LOG_NOTICE;
+
     mLogFormatNames[DEFAULT] = "DEFAULT";
     mLogFormatNames[MULTILINE] = "MULTILINE";
     mLogFormatNames[SHORT] = "SHORT";
     mLogFormat = getLogFormatFromEnv();
 
     mPriority = getLogLevelFromEnv();
+    mLogOutput = getLogOutputFromEnv();
 
     if (getLogColorFromEnv())
     {
@@ -106,7 +116,6 @@ bool Logger::getLogColorFromEnv() const
     return false;
 }
 
-
 LogFormat Logger::getLogFormatFromEnv() const
 {
     const char* logtype = getenv("BASE_LOG_FORMAT");
@@ -131,6 +140,20 @@ LogFormat Logger::getLogFormatFromEnv() const
     return DEFAULT;
 }
 
+LogOutput Logger::getLogOutputFromEnv() const
+{
+    const char* logoutput = getenv("BASE_LOG_OUTPUT");
+    if(!logoutput)
+        return DEFAULT_OUTPUT;
+
+    std::string logoutput_str(logoutput);
+    std::transform(logoutput_str.begin(), logoutput_str.end(),logoutput_str.begin(), (int(*)(int)) std::toupper);
+
+    if(logoutput_str == "SYSLOG")
+        return SYSLOG;
+
+    return DEFAULT_OUTPUT;
+}
 
 void Logger::log(Priority priority, const char* function, const char* file, int line, const char* name_space, const char* format, ...) const
 {
@@ -168,16 +191,41 @@ void Logger::logBuffer(Priority priority, const char* function, const char* file
         {
             case ENDLOGFORMATS:
             case DEFAULT:
-                fprintf(mStream, "[%s:%03d] %s[%5s] - %s::%s%s (%s:%d - %s)\n", currentTime, milliSecs, mpLogColor[priority], mPriorityNames[priority].c_str(), name_space, buffer, mpColorEnd, file, line, function);
+                switch (mLogOutput)
+                {
+                    case DEFAULT_OUTPUT:
+                        fprintf(mStream, "[%s:%03d] %s[%5s] - %s::%s%s (%s:%d - %s)\n", currentTime, milliSecs, mpLogColor[priority], mPriorityNames[priority].c_str(), name_space, buffer, mpColorEnd, file, line, function);
+                        break;
+                    case SYSLOG:
+                        syslog(mPriorityToSyslogPriority[priority], "[%s:%03d] %s[%5s] - %s::%s%s (%s:%d - %s)", currentTime, milliSecs, mpLogColor[priority], mPriorityNames[priority].c_str(), name_space, buffer, mpColorEnd, file, line, function);
+                        break;
+                }
                 break;
             case MULTILINE:
-                fprintf(mStream, "[%s:%03d] in %s\n\t%s:%d\n\t%s[%5s] - %s::%s%s \n", currentTime, milliSecs, function, file, line, mpLogColor[priority], mPriorityNames[priority].c_str(), name_space, buffer, mpColorEnd);
+                switch (mLogOutput)
+                {
+                    case DEFAULT_OUTPUT:
+                        fprintf(mStream, "[%s:%03d] in %s\n\t%s:%d\n\t%s[%5s] - %s::%s%s \n", currentTime, milliSecs, function, file, line, mpLogColor[priority], mPriorityNames[priority].c_str(), name_space, buffer, mpColorEnd);
+                        break;
+                    case SYSLOG:
+                        // multiline is not supported in syslog; it will be printed on one line
+                        syslog(mPriorityToSyslogPriority[priority], "[%s:%03d] in %s %s:%d %s[%5s] - %s::%s%s", currentTime, milliSecs, function, file, line, mpLogColor[priority], mPriorityNames[priority].c_str(), name_space, buffer, mpColorEnd);
+                        break;
+                }
                 break;
             case SHORT:
-                fprintf(mStream, "%s[%5s] - %s::%s%s\n", mpLogColor[priority], mPriorityNames[priority].c_str(), name_space, buffer, mpColorEnd);
+                switch (mLogOutput)
+                {
+                    case DEFAULT_OUTPUT:
+                        fprintf(mStream, "%s[%5s] - %s::%s%s\n", mpLogColor[priority], mPriorityNames[priority].c_str(), name_space, buffer, mpColorEnd);
+                        break;
+                    case SYSLOG:
+                        syslog(mPriorityToSyslogPriority[priority], "%s[%5s] - %s::%s%s", mpLogColor[priority], mPriorityNames[priority].c_str(), name_space, buffer, mpColorEnd);
+                        break;
+                }
                 break;
        }
-        fflush(mStream);
+       fflush(mStream);
     }
 }
 
